@@ -48,7 +48,7 @@ chameleon = { name = "lizard", channel = "animals", version = "^2.5.4" }  # Exam
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
-"""
+"""  # noqa E501
 
 SAMPLE_TOML_DEFAULT_CHANNEL_PIP = """\
 [tool.poetry]
@@ -96,7 +96,7 @@ chameleon = { name = "lizard", channel = "animals", version = "^2.5.4" }  # Exam
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
-"""
+"""  # noqa E501
 
 
 SAMPLE_YAML = """\

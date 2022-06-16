@@ -87,6 +87,8 @@ def convert_version(spec_str: str) -> str:
         converted = str(spec)
     elif isinstance(spec, semver.VersionUnion):
         raise ValueError("Complex version constraints are not supported at the moment.")
+    else:
+        raise ValueError("Version constraint could not be parsed.")
     return converted
 
 
@@ -129,7 +131,7 @@ def parse_pyproject_toml(file: TextIO) -> Tuple[Mapping, Mapping]:
     return poetry2conda_config, poetry_config
 
 
-def collect_dependencies(
+def collect_dependencies(  # noqa C901
     poetry_dependencies: Mapping, conda_constraints: Mapping, default_channel: str
 ) -> Tuple[Mapping, Mapping]:
     """ Organize and apply conda constraints to dependencies
@@ -153,7 +155,7 @@ def collect_dependencies(
     # 1. Do a first pass to change pip to conda packages
     for name, conda_dict in conda_constraints.items():
         if name in poetry_dependencies and "git" in poetry_dependencies[name]:
-            poetry_dependencies[name] = conda_dict["version"]
+            poetry_dependencies[name] = conda_dict["version"]  # type: ignore
 
     # 2. Now do the conversion
     for name, constraint in poetry_dependencies.items():
@@ -252,7 +254,7 @@ def to_yaml_string(
         version = version or ""
         deps_str.append(f"  - {name}{version}")
     if pip_dependencies:
-        deps_str.append(f"  - pip:")
+        deps_str.append("  - pip:")
     for name, version in pip_dependencies.items():
         version = version or ""
         deps_str.append(f"    - {name}{version}")
