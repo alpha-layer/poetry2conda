@@ -19,7 +19,7 @@ collaborators that prefer regular Python/PyPI and others that prefer conda.
 Features
 --------
 
-- Set conda channels for each dependency.
+- Set conda channels globally or for each dependency.
 - Rename conda dependencies.
 - Exclude conda dependencies.
 - Convert tilde and caret dependencies to regular version specifiers.
@@ -150,6 +150,29 @@ Which would give:
 .. code-block:: yaml
 
     name: example-with-pip
+    dependencies:
+      - pip
+      - pip:
+        - quetzal-client>=0.5.2,<0.6.0
+
+You can also default all of your packages to be pulled from a specific channel:
+
+.. code-block:: toml
+
+
+    [tool.poetry.dependencies]
+    quetzal-client = "^0.5.2"
+    # ...
+
+    [tool.poetry2conda]
+    name = "example-default-pip"
+    default-channel = "pip"
+
+Which would give:
+
+.. code-block:: yaml
+
+    name: example-default-pip
     dependencies:
       - pip
       - pip:
