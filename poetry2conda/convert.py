@@ -3,7 +3,7 @@ import contextlib
 import pathlib
 import sys
 from datetime import datetime
-from typing import Mapping, TextIO, Tuple, Iterable, Optional
+from typing import Iterable, Mapping, Optional, TextIO, Tuple
 
 import semver
 import toml
@@ -153,15 +153,19 @@ def collect_dependencies(
     for name, constraint in poetry_dependencies.items():
         if isinstance(constraint, str):
             dependencies[name] = convert_version(constraint)
+
         elif isinstance(constraint, dict):
             if constraint.get("optional", False):
                 continue
+
             if "git" in constraint:
                 git = constraint["git"]
                 tag = constraint["tag"]
                 pip_dependencies[f"git+{git}@{tag}#egg={name}"] = None
+
             elif "version" in constraint:
                 dependencies[name] = convert_version(constraint["version"])
+
             else:
                 raise ValueError(
                     f"This converter only supports normal dependencies and "
@@ -169,6 +173,7 @@ def collect_dependencies(
                     f"environment markers or multiple constraints. In your "
                     f'case, check the "{name}" dependency. Sorry.'
                 )
+
         else:
             raise ValueError(
                 f"This converter only supports normal dependencies and "
@@ -178,10 +183,16 @@ def collect_dependencies(
 
         if name in conda_constraints:
             conda_dict = conda_constraints[name]
+
+            if "exclude" in conda_dict and conda_dict["exclude"] == True:
+                dependencies.pop(name)
+                continue
+
             if "name" in conda_dict:
                 new_name = conda_dict["name"]
                 dependencies[new_name] = dependencies.pop(name)
                 name = new_name
+
             # do channel last, because it may move from dependencies to pip_dependencies
             if "channel" in conda_dict:
                 channel = conda_dict["channel"]

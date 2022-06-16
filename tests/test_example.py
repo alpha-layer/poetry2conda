@@ -1,9 +1,7 @@
 import io
 
 import yaml
-
 from poetry2conda.convert import main
-
 
 # foo, bar, baz, qux, quux, quuz, corge, grault, garply, waldo, fred, plugh, xyzzy, and thud;
 SAMPLE_TOML = """\
@@ -24,6 +22,7 @@ quux = "2.34.5"             # Example of an exact version
 quuz = ">=3.2"              # Example of an inequality
 xyzzy = ">=2.1,<4.2"        # Example of two inequalities
 spinach = "^19.10b0"        # Previously non-working version spec
+pineapple = "1.2.3"         # Will be excluded below
 grault = { git = "https://github.com/organization/repo.git", tag = "v2.7.4"}   # Example of a git package
 pizza = {extras = ["pepperoni"], version = "^1.2.3"}  # Example of a package with extra requirements
 chameleon = { git = "https://github.com/org/repo.git", tag = "v2.3" }
@@ -42,6 +41,7 @@ name = "bibimbap-env"
 bar = { channel = "conda-forge" }            # Example of a package on conda-forge
 baz = { channel = "pip" }                    # Example of a pure pip package
 qux = { name = "thud" }                      # Example of a package that changes names in conda
+pineapple = { exclude = true }               # Example of a package to exclude from the output
 chameleon = { name = "lizard", channel = "animals", version = "^2.5.4" }  # Example of a package that changes from git to regular conda
 
 [build-system]

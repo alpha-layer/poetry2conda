@@ -21,6 +21,7 @@ Features
 
 - Set conda channels for each dependency.
 - Rename conda dependencies.
+- Exclude conda dependencies.
 - Convert tilde and caret dependencies to regular version specifiers.
 - Handle pure pip dependencies.
 
@@ -222,6 +223,20 @@ Which will be translated to:
     name: strange-example
     dependencies:
       - conda-forge::bob>=2.3.0,<3.0.0
+
+Sometimes, you may just want to exclude a dependency from conda. For this case, declare it as follows:
+
+.. code-block:: toml
+
+    [tool.poetry.dependencies]
+    foo = "^1.2.3"
+    # ...
+
+    [tool.poetry2conda]
+    name = "my-env-with-channels"
+
+    [tool.poetry2conda.dependencies]
+    foo = { exclude = true }
 
 
 Contribute
