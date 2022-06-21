@@ -34,9 +34,14 @@ pytest-mock = "^3.0.0"
 coverage = "^5.1"
 pytest-cov = "^2.8.1"
 black = "^19.10b0"
+flake8 = "^4.0.1"
 
 [tool.poetry.scripts]
 poetry2conda = "poetry2conda.convert:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_paths = "./poetry2conda"
 
 [tool.poetry2conda]
 name = 'p2c-env'

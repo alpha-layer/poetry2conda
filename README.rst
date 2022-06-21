@@ -19,8 +19,9 @@ collaborators that prefer regular Python/PyPI and others that prefer conda.
 Features
 --------
 
-- Set conda channels for each dependency.
+- Set conda channels globally or for each dependency.
 - Rename conda dependencies.
+- Exclude conda dependencies.
 - Convert tilde and caret dependencies to regular version specifiers.
 - Handle pure pip dependencies.
 
@@ -154,6 +155,29 @@ Which would give:
       - pip:
         - quetzal-client>=0.5.2,<0.6.0
 
+You can also default all of your packages to be pulled from a specific channel:
+
+.. code-block:: toml
+
+
+    [tool.poetry.dependencies]
+    quetzal-client = "^0.5.2"
+    # ...
+
+    [tool.poetry2conda]
+    name = "example-default-pip"
+    default-channel = "pip"
+
+Which would give:
+
+.. code-block:: yaml
+
+    name: example-default-pip
+    dependencies:
+      - pip
+      - pip:
+        - quetzal-client>=0.5.2,<0.6.0
+
 
 Not all poetry dependency types are supported, only regular ones and git
 dependencies:
@@ -222,6 +246,20 @@ Which will be translated to:
     name: strange-example
     dependencies:
       - conda-forge::bob>=2.3.0,<3.0.0
+
+Sometimes, you may just want to exclude a dependency from conda. For this case, declare it as follows:
+
+.. code-block:: toml
+
+    [tool.poetry.dependencies]
+    foo = "^1.2.3"
+    # ...
+
+    [tool.poetry2conda]
+    name = "my-env-with-channels"
+
+    [tool.poetry2conda.dependencies]
+    foo = { exclude = true }
 
 
 Contribute

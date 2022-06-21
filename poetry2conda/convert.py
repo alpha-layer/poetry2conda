@@ -3,7 +3,7 @@ import contextlib
 import pathlib
 import sys
 from datetime import datetime
-from typing import Mapping, TextIO, Tuple, Iterable, Optional
+from typing import Iterable, Mapping, Optional, TextIO, Tuple
 
 import semver
 import toml
@@ -38,6 +38,12 @@ def convert(
         extras = []
     poetry2conda_config, poetry_config = parse_pyproject_toml(file)
     env_name = poetry2conda_config["name"]
+
+    if "default-channel" in poetry2conda_config:
+        default_channel = poetry2conda_config["default-channel"]
+    else:
+        default_channel = "conda"
+
     poetry_dependencies = poetry_config.get("dependencies", {})
     if include_dev:
         poetry_dependencies.update(poetry_config.get("dev-dependencies", {}))
@@ -51,7 +57,7 @@ def convert(
     conda_constraints = poetry2conda_config.get("dependencies", {})
 
     dependencies, pip_dependencies = collect_dependencies(
-        poetry_dependencies, conda_constraints
+        poetry_dependencies, conda_constraints, default_channel
     )
     conda_yaml = to_yaml_string(env_name, dependencies, pip_dependencies)
     return conda_yaml
@@ -81,6 +87,8 @@ def convert_version(spec_str: str) -> str:
         converted = str(spec)
     elif isinstance(spec, semver.VersionUnion):
         raise ValueError("Complex version constraints are not supported at the moment.")
+    else:
+        raise ValueError("Version constraint could not be parsed.")
     return converted
 
 
@@ -123,8 +131,8 @@ def parse_pyproject_toml(file: TextIO) -> Tuple[Mapping, Mapping]:
     return poetry2conda_config, poetry_config
 
 
-def collect_dependencies(
-    poetry_dependencies: Mapping, conda_constraints: Mapping
+def collect_dependencies(  # noqa C901
+    poetry_dependencies: Mapping, conda_constraints: Mapping, default_channel: str
 ) -> Tuple[Mapping, Mapping]:
     """ Organize and apply conda constraints to dependencies
 
@@ -147,21 +155,25 @@ def collect_dependencies(
     # 1. Do a first pass to change pip to conda packages
     for name, conda_dict in conda_constraints.items():
         if name in poetry_dependencies and "git" in poetry_dependencies[name]:
-            poetry_dependencies[name] = conda_dict["version"]
+            poetry_dependencies[name] = conda_dict["version"]  # type: ignore
 
     # 2. Now do the conversion
     for name, constraint in poetry_dependencies.items():
         if isinstance(constraint, str):
             dependencies[name] = convert_version(constraint)
+
         elif isinstance(constraint, dict):
             if constraint.get("optional", False):
                 continue
+
             if "git" in constraint:
                 git = constraint["git"]
                 tag = constraint["tag"]
                 pip_dependencies[f"git+{git}@{tag}#egg={name}"] = None
+
             elif "version" in constraint:
                 dependencies[name] = convert_version(constraint["version"])
+
             else:
                 raise ValueError(
                     f"This converter only supports normal dependencies and "
@@ -169,6 +181,7 @@ def collect_dependencies(
                     f"environment markers or multiple constraints. In your "
                     f'case, check the "{name}" dependency. Sorry.'
                 )
+
         else:
             raise ValueError(
                 f"This converter only supports normal dependencies and "
@@ -178,18 +191,33 @@ def collect_dependencies(
 
         if name in conda_constraints:
             conda_dict = conda_constraints[name]
+
+            if "exclude" in conda_dict and conda_dict["exclude"] == True:
+                dependencies.pop(name)
+                continue
+
             if "name" in conda_dict:
                 new_name = conda_dict["name"]
                 dependencies[new_name] = dependencies.pop(name)
                 name = new_name
+
             # do channel last, because it may move from dependencies to pip_dependencies
             if "channel" in conda_dict:
-                channel = conda_dict["channel"]
+                channel = conda_dict["channel"] or default_channel
                 if channel == "pip":
                     pip_dependencies[name] = dependencies.pop(name)
-                else:
+                elif channel != "conda":
                     new_name = f"{channel}::{name}"
                     dependencies[new_name] = dependencies.pop(name)
+                else:
+                    dependencies[name] = dependencies.pop(name)
+
+        elif name != "python" and name in dependencies:
+            if default_channel == "pip":
+                pip_dependencies[name] = dependencies.pop(name)
+            elif default_channel != "conda":
+                new_name = f"{default_channel}::{name}"
+                dependencies[new_name] = dependencies.pop(name)
 
     if pip_dependencies:
         dependencies["pip"] = None
@@ -226,7 +254,7 @@ def to_yaml_string(
         version = version or ""
         deps_str.append(f"  - {name}{version}")
     if pip_dependencies:
-        deps_str.append(f"  - pip:")
+        deps_str.append("  - pip:")
     for name, version in pip_dependencies.items():
         version = version or ""
         deps_str.append(f"    - {name}{version}")
