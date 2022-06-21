@@ -3,12 +3,16 @@ import contextlib
 import pathlib
 import sys
 from datetime import datetime
-from typing import Iterable, Mapping, Optional, TextIO, Tuple
+from typing import Dict, Iterable, Mapping, Optional, TextIO, Tuple, Union
 
 import semver
 import toml
 
 from poetry2conda import __version__
+
+YamlDict = Dict[str, Union[str, bool]]
+Dependencies = Dict[str, Union[str, YamlDict]]
+Constraints = Dict[str, YamlDict]
 
 
 def convert(
@@ -132,7 +136,7 @@ def parse_pyproject_toml(file: TextIO) -> Tuple[Mapping, Mapping]:
 
 
 def collect_dependencies(  # noqa C901
-    poetry_dependencies: Mapping, conda_constraints: Mapping, default_channel: str
+    poetry_dependencies: Dependencies, conda_constraints: Constraints, default_channel: str
 ) -> Tuple[Mapping, Mapping]:
     """ Organize and apply conda constraints to dependencies
 
@@ -154,6 +158,9 @@ def collect_dependencies(  # noqa C901
 
     # 1. Do a first pass to change pip to conda packages
     for name, conda_dict in conda_constraints.items():
+        if "exclude" in conda_dict and conda_dict["exclude"] == True:
+            poetry_dependencies.pop(name)
+
         if name in poetry_dependencies and "git" in poetry_dependencies[name]:
             poetry_dependencies[name] = conda_dict["version"]  # type: ignore
 
@@ -172,7 +179,7 @@ def collect_dependencies(  # noqa C901
                 pip_dependencies[f"git+{git}@{tag}#egg={name}"] = None
 
             elif "version" in constraint:
-                dependencies[name] = convert_version(constraint["version"])
+                dependencies[name] = convert_version(str(constraint["version"]))
 
             else:
                 raise ValueError(
@@ -191,10 +198,6 @@ def collect_dependencies(  # noqa C901
 
         if name in conda_constraints:
             conda_dict = conda_constraints[name]
-
-            if "exclude" in conda_dict and conda_dict["exclude"] == True:
-                dependencies.pop(name)
-                continue
 
             if "name" in conda_dict:
                 new_name = conda_dict["name"]

@@ -24,6 +24,7 @@ xyzzy = ">=2.1,<4.2"        # Example of two inequalities
 spinach = "^19.10b0"        # Previously non-working version spec
 pineapple = "1.2.3"         # Will be excluded below
 grault = { git = "https://github.com/organization/repo.git", tag = "v2.7.4"}   # Example of a git package
+corge = { git = "ssh://git@github.com/organization/repo.git", tag = "master"}  # Git package ignored below
 pizza = {extras = ["pepperoni"], version = "^1.2.3"}  # Example of a package with extra requirements
 chameleon = { git = "https://github.com/org/repo.git", tag = "v2.3" }
 pudding = { version = "^1.0", optional = true }
@@ -42,6 +43,7 @@ bar = { channel = "conda-forge" }            # Example of a package on conda-for
 baz = { channel = "pip" }                    # Example of a pure pip package
 qux = { name = "thud" }                      # Example of a package that changes names in conda
 pineapple = { exclude = true }               # Example of a package to exclude from the output
+corge = { exclude = true }                   # Example of a git repo package to exclude from the output
 chameleon = { name = "lizard", channel = "animals", version = "^2.5.4" }  # Example of a package that changes from git to regular conda
 
 [build-system]
@@ -70,6 +72,7 @@ xyzzy = ">=2.1,<4.2"        # Example of two inequalities
 spinach = "^19.10b0"        # Previously non-working version spec
 pineapple = "1.2.3"         # Will be excluded below
 grault = { git = "https://github.com/organization/repo.git", tag = "v2.7.4"}   # Example of a git package
+corge = { git = "ssh://git@github.com/organization/repo.git", tag = "master"}  # Git package ignored below
 pizza = {extras = ["pepperoni"], version = "^1.2.3"}  # Example of a package with extra requirements
 chameleon = { git = "https://github.com/org/repo.git", tag = "v2.3" }
 pudding = { version = "^1.0", optional = true }
@@ -90,6 +93,7 @@ baz = { channel = "conda" }                  # Example of an explicit conda pack
 qux = { name = "thud", channel = "conda" }   # Example of a package that changes names in conda
 xyzzy = { name = "thunk", channel = "pip" }  # Example of a package replacement in pip
 pineapple = { exclude = true }               # Example of a package to exclude from the output
+corge = { exclude = true }                   # Example of a git repo package to exclude from the output
 chameleon = { name = "lizard", channel = "animals", version = "^2.5.4" }  # Example of a package that changes from git to regular conda
 
 [build-system]
