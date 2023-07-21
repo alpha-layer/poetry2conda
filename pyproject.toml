@@ -42,8 +42,7 @@ poetry2conda = "poetry2conda.convert:main"
 [[tool.poetry.source]]
 name = "alphalayer-publish"
 url = "https://pkgs.dev.azure.com/alphalayerai/Packages/_packaging/Python/pypi/upload/"
-default = false
-secondary = true
+priority = "explicit"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

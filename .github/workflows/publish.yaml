@@ -6,6 +6,10 @@ on:
 
 jobs:
   publish:
+    permissions:
+      contents: read
+      id-token: write # Required to use OIDC token authentication
+
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -14,22 +18,29 @@ jobs:
         python-version: [3.9]
 
     steps:
-    - name: Git Checkout
-      uses: actions/checkout@v3
-      with:
-        lfs: true
+      - name: Git Checkout
+        uses: actions/checkout@v3
 
-    - name: Install poetry
-      run: pipx install poetry
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4.3.0
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: poetry
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Build and publish
-      run: |
-        poetry version ${{ github.ref_name }}
-        poetry build
-        poetry publish --repository alphalayer-publish --username __token__ --password ${{ secrets.ADO_PACKAGES_PAT }}
+      - name: Set ADO Token for Private Package Feed
+        run: |
+          TOKEN=$(az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query "accessToken" --output tsv)
+          poetry config http-basic.alphalayer-publish __token__ $TOKEN
+
+      - name: Build and publish
+        run: |
+          poetry version ${{ github.ref_name }}
+          poetry build
+          poetry publish --repository alphalayer-publish
